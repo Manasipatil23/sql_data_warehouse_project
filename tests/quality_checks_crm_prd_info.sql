@@ -60,3 +60,18 @@ SELECT prd_id, prd_key, prd_start_dt, prd_end_dt,
        DATEADD(day, -1, LEAD(prd_start_dt) OVER (PARTITION BY prd_key ORDER BY prd_start_dt)) AS new_end_dt
 FROM bronze.crm_prd_info
 WHERE prd_key = 'AC-HE-HL-U509-R';
+
+
+-- ============================================================
+-- After loading: verify silver.crm_prd_info
+-- ============================================================
+
+-- Expectation: 0 end dates before start dates, 0 NULL costs
+SELECT SUM(CASE WHEN prd_end_dt < prd_start_dt THEN 1 ELSE 0 END) AS bad_dates,
+       SUM(CASE WHEN prd_cost IS NULL THEN 1 ELSE 0 END) AS null_costs
+FROM silver.crm_prd_info;
+
+-- Expectation: only Mountain, Road, Other Sales, Touring, n/a
+SELECT prd_line, COUNT(*) AS rows_found
+FROM silver.crm_prd_info
+GROUP BY prd_line;
